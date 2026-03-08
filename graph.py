@@ -40,9 +40,9 @@ def research_market(state: OutreachState) -> OutreachState:
     search_client = SearchClient()
     search_tool = search_client.get_tools()[0]
     
-    # We use LLM to decide what to search for, we'll do a simple prompt for the prototype
+   
     system_prompt = """You are a top-tier B2B market researcher focusing on the Indian market.
-Your goal is to identify 3-5 newly funded startups or stable companies in India that are highly likely to benefit from an 'Influencer Marketing Campaign'.
+Your goal is to identify 10 newly funded startups or stable companies in India that are highly likely to benefit from an 'Influencer Marketing Campaign'.
 Consumer brands, D2C, e-commerce, EdTech, and Fintech are good targets.
 
 You MUST return your findings as a strict JSON array of objects.
@@ -50,16 +50,14 @@ Each object must have exactly two keys: "name" (the company name) and "domain" (
 Do NOT include markdown formatting like ```json.
 """
     
-    # In a full LangGraph we'd use a ToolNode for the search, but since Tavily gives great direct
-    # results, we can just feed a query to it and then context into Gemini.
-    search_results = search_tool.invoke("Newly funded Indian startups D2C e-commerce edtech latest news")
+    search_results = search_tool.invoke("10 Newly funded Indian startups D2C e-commerce edtech latest news")
     
-    user_msg = f"Use this search context to find 3-5 target companies:\n{search_results}\n\nProvide the JSON list of companies and domains."
+    user_msg = f"Use this search context to find 10 target companies:\n{search_results}\n\nProvide the JSON list of companies and domains."
     
     response = llm.invoke([SystemMessage(content=system_prompt), HumanMessage(content=user_msg)])
     
     try:
-        # Clean any accidental markdown formatting
+    
         text = response.content.replace("```json", "").replace("```", "").strip()
         companies = json.loads(text)
         print(f"Found {len(companies)} companies: {[c.get('name') for c in companies]}")
@@ -83,8 +81,7 @@ def find_contacts(state: OutreachState) -> OutreachState:
     apollo = ApolloClient()
     all_contacts = []
     
-    # To respect limits, we'll just process until we have enough
-    # For daily limits of 20, 3-5 companies with 2 contacts each is enough.
+   
     for company in companies:
         domain = company.get("domain")
         company_name = company.get("name")
