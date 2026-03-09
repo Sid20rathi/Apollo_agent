@@ -60,8 +60,19 @@ Do NOT include markdown formatting like ```json.
     
         text = response.content.replace("```json", "").replace("```", "").strip()
         companies = json.loads(text)
-        print(f"Found {len(companies)} companies: {[c.get('name') for c in companies]}")
-        return {"companies_to_target": companies}
+        
+        # Filter out companies that have already been contacted
+        contacted_list = sheets_client.get_contacted_companies()
+        new_companies = []
+        for c in companies:
+            name_lower = str(c.get('name', '')).strip().lower()
+            if name_lower not in contacted_list:
+                new_companies.append(c)
+            else:
+                print(f"Skipping {c.get('name')} - already contacted previously.")
+        
+        print(f"Found {len(new_companies)} new companies (filtered out {len(companies) - len(new_companies)} duplicates).")
+        return {"companies_to_target": new_companies}
     except Exception as e:
         print(f"Error parsing Gemini response: {e}")
         return {"errors": ["Failed to extract company list from Gemini"]}

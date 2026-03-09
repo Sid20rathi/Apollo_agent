@@ -69,3 +69,19 @@ class GoogleSheetsClient:
             self.sheet.append_row(row)
         except Exception as e:
             print(f"Error appending to Google Sheets: {str(e)}")
+
+    def get_contacted_companies(self):
+        """
+        Get a set of all companies that have already been contacted.
+        We'll use both 'Company' name and 'Email' to be safe, but primarily company name.
+        """
+        if not self.sheet: return set()
+        
+        try:
+            records = self.sheet.get_all_records()
+            # We return a set of lowercase company names for robust comparison
+            contacted = {str(row.get('Company', '')).strip().lower() for row in records if row.get('Company')}
+            return contacted
+        except Exception as e:
+            print(f"Error reading from Google Sheets: {str(e)}")
+            return set()
