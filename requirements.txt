@@ -11,3 +11,4 @@ python-dotenv>=1.0.1
 schedule>=1.2.1
 pandas>=2.2.1
 pydantic>=2.6.4
+apify-client>=1.6.4

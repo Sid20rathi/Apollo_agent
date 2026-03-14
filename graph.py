@@ -4,6 +4,7 @@ from langgraph.graph import StateGraph, START, END
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 import json
+import concurrent.futures
 
 from config import config
 from tools.apollo_client import ApolloClient
@@ -38,21 +39,34 @@ def research_market(state: OutreachState) -> OutreachState:
 
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=config.GEMINI_API_KEY, temperature=0.3)
     search_client = SearchClient()
-    search_tool = search_client.get_tools()[0]
+    tools = search_client.get_tools()
+    tavily_tool = tools[0]
+    apify_tool = tools[1] if len(tools) > 1 else None
     
    
     system_prompt = """You are a top-tier B2B market researcher focusing on the Indian market.
-Your goal is to identify 10 newly funded startups or stable companies in India that are highly likely to benefit from an 'Influencer Marketing Campaign'.
+Your goal is to identify a minimum of 20 to 30 newly funded startups or stable companies in India that are highly likely to benefit from an 'Influencer Marketing Campaign'.
 Consumer brands, D2C, e-commerce, EdTech, and Fintech are good targets.
 
 You MUST return your findings as a strict JSON array of objects.
 Each object must have exactly two keys: "name" (the company name) and "domain" (the company's website domain, e.g., "example.com", no https://).
 Do NOT include markdown formatting like ```json.
 """
-    
-    search_results = search_tool.invoke("10 Newly funded Indian startups D2C e-commerce edtech latest news")
-    
-    user_msg = f"Use this search context to find 10 target companies:\n{search_results}\n\nProvide the JSON list of companies and domains."
+    print("Running parallel web searches (Tavily + Apify)...")
+    def run_tavily():
+        return tavily_tool.invoke("20 Newly funded Indian startups D2C e-commerce edtech latest news")
+
+    def run_apify():
+        if apify_tool:
+            return apify_tool.invoke("latest top 30 Indian startups 2024 funding list")
+        return ""
+        
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future_tavily = executor.submit(run_tavily)
+        future_apify = executor.submit(run_apify)
+        search_results = f"TAVILY RESULTS:\\n{future_tavily.result()}\\n\\nAPIFY RESULTS:\\n{future_apify.result()}"
+        
+    user_msg = f"Use this extensive search context to find 20-30 target companies:\\n{search_results}\\n\\nProvide the JSON list of minimum 20 companies and domains."
     
     response = llm.invoke([SystemMessage(content=system_prompt), HumanMessage(content=user_msg)])
     

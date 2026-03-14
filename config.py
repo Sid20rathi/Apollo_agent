@@ -9,6 +9,7 @@ class Config:
     TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
     APOLLO_API_KEY = os.getenv("APOLLO_API_KEY")
     RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+    APIFY_KEY = os.getenv("APIFY_KEY")
     
     LANGCHAIN_API_KEY = os.getenv("LANGCHAIN_API_KEY")
     LANGCHAIN_PROJECT = os.getenv("LANGCHAIN_PROJECT", "apollo-marketing-agent")
@@ -29,6 +30,7 @@ class Config:
         if not cls.TAVILY_API_KEY: missing.append("TAVILY_API_KEY")
         if not cls.APOLLO_API_KEY: missing.append("APOLLO_API_KEY")
         if not cls.RESEND_API_KEY: missing.append("RESEND_API_KEY")
+        if not cls.APIFY_KEY: missing.append("APIFY_KEY")
         if not cls.SENDER_EMAIL: missing.append("SENDER_EMAIL")
         
         if missing:
