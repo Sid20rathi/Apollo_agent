@@ -18,7 +18,7 @@ class Config:
     GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "credentials.json")
     SPREADSHEET_NAME = os.getenv("SPREADSHEET_NAME", "apollo_outreach_tracker")
     
-    DAILY_EMAIL_LIMIT = int(os.getenv("DAILY_EMAIL_LIMIT", "15"))
+    DAILY_EMAIL_LIMIT = int(os.getenv("DAILY_EMAIL_LIMIT", "30")) # Increased to 30 to process more distinct companies
     SENDER_EMAIL = os.getenv("SENDER_EMAIL")
     COMPANY_NAME = os.getenv("COMPANY_NAME", "Your Company Name")
     EXPECTED_OUTREACH_TOPIC = os.getenv("EXPECTED_OUTREACH_TOPIC", "Influencer Marketing Campaign Partnerships")

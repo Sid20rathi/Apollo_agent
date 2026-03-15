@@ -24,7 +24,7 @@ class ApolloClient:
             "q_organization_domains": domain,
             "person_titles": titles,
             "page": 1,
-            "per_page": 2 # We only need a few top contacts
+            "per_page": 1 # We only need 1 top contact per company to maximize distinct companies
         }
         
         try:
