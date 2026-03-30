@@ -40,9 +40,14 @@ class ApolloClient:
                      email = self._enrich_contact(person['id'])
                 
                 if email:
+                    # Handle cases where last_name might be None
+                    first_name = person.get('first_name', '')
+                    last_name = person.get('last_name', '')
+                    full_name = f"{first_name} {last_name}".strip() if last_name else first_name
+                    
                     contacts.append({
                         "id": person.get("id"),
-                        "name": f"{person.get('first_name')} {person.get('last_name')}",
+                        "name": full_name,
                         "title": person.get('title'),
                         "email": email,
                         "linkedin_url": person.get('linkedin_url'),

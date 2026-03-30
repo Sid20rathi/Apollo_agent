@@ -37,13 +37,7 @@ def main():
     # For testing, you can uncomment this to run it immediately once
     run_daily_outreach()
     
-    # Schedule the job every day at 10:00 AM
-    schedule.every().day.at("10:00").do(run_daily_outreach)
-    
-    print("Job scheduled. Waiting...")
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
+
 
 if __name__ == "__main__":
     main()

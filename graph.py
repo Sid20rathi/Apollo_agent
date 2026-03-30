@@ -30,7 +30,7 @@ def research_market(state: OutreachState) -> OutreachState:
     """
     print("--- \033[94mAGENT 1: Researching Market\033[0m ---")
     
-    # Check sheet to see if we've hit our daily limit early
+ 
     sheets_client = GoogleSheetsClient()
     todays_count = sheets_client.get_todays_outreach_count()
     if todays_count >= config.DAILY_EMAIL_LIMIT:
@@ -58,7 +58,7 @@ Do NOT include markdown formatting like ```json.
 
     def run_apify():
         if apify_tool:
-            return apify_tool.invoke("latest top 30 Indian startups 2024 funding list")
+            return apify_tool.invoke("latest top 30 Indian startups 2025-2026 funding list")
         return ""
         
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -152,30 +152,37 @@ def draft_and_send_emails(state: OutreachState) -> OutreachState:
         
         if not email: continue
         
-        print(f"Drafting email for {name} ({title}) at {company}...")
+        print(f"Sending email to {name} ({title}) at {company}...")
         
-        system_prompt = f"""You are a professional B2B business development representative for "{config.COMPANY_NAME}".
-Your goal is to write a highly personalized, concise cold email pitching our {config.EXPECTED_OUTREACH_TOPIC}.
-The target recipient is {name}, whose title is {title} at the company "{company}".
+        # Hardcoded email content from test_single_email.py as requested
+        html_body = f"""
+    <p>Hi {name},</p>
+    <p>We have worked with brands like Tata, Canon, Nykaa, Pluxee, and many more.<br> - Drove 50M+ reach across 500+ campaigns.<br>We don't pitch influencers. We pitch the brand fits. <br></p>
 
-Guidelines:
-- Keep it under 150 words.
-- Be polite, professional, yet casual enough for the Indian startup ecosystem.
-- Start directly (no "I hope this email finds you well").
-- Provide a clear call to action (e.g., a 10 min chat).
-- Do NOT include subject line in the body. Output ONLY the raw HTML body (e.g. using <p>, <br>).
-"""
-        response = llm.invoke([SystemMessage(content=system_prompt), HumanMessage(content="Draft the email body now.")])
-        html_body = response.content
+
+    <p> open to a quick call? {config.CAL_URL}<p>
+
+    <p>Best,<br>Nidhi<br>{config.COMPANY_NAME} | {config.COMPANY_WEBSITE}</p>
+        """
         
-        subject = f"Influencer Marketing for {company} / {config.COMPANY_NAME}"
+        text_body = f"""Hi {name},
+
+- worked with brands like Tata, Canon, Nykaa, Pluxee, and many more.
+- drove 50M+ reach across 500+ campaigns
+- we don't pitch influencers. we pitch the brand fits.
+
+open to a quick call? {config.CAL_URL}
+
+Best,
+Nidhi
+The Latest Buzz | {config.COMPANY_WEBSITE}"""
+        
+        subject = "This will take you 30 seconds to read"
         
         # Send Email
-        # success, info = resend_client.send_pitch_email(email, subject, html_body)
-        print(f"Skipping actual email send for testing. Email would be sent to {email}")
-        success, info = True, "Test_Skipped_Send"
+        success, info = resend_client.send_pitch_email(email, subject, html_body, text_body)
         
-        status = "Test (Not Sent)" if success else "Failed"
+        status = "Sent" if success else "Failed"
         sheets_client.log_outreach(company, name, title, email, status, str(info))
         
         if success:

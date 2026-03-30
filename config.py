@@ -22,6 +22,8 @@ class Config:
     SENDER_EMAIL = os.getenv("SENDER_EMAIL")
     COMPANY_NAME = os.getenv("COMPANY_NAME", "Your Company Name")
     EXPECTED_OUTREACH_TOPIC = os.getenv("EXPECTED_OUTREACH_TOPIC", "Influencer Marketing Campaign Partnerships")
+    COMPANY_WEBSITE = os.getenv("COMPANY_WEBSITE", "the-latestbuzz.com")
+    CAL_URL = os.getenv("CAL_CALL","")
 
     @classmethod
     def validate(cls):
