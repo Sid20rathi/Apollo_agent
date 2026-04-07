@@ -5,6 +5,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 import json
 import concurrent.futures
+from datetime import datetime
 
 from config import config
 from tools.apollo_client import ApolloClient
@@ -44,29 +45,62 @@ def research_market(state: OutreachState) -> OutreachState:
     apify_tool = tools[1] if len(tools) > 1 else None
     
    
-    system_prompt = """You are a top-tier B2B market researcher focusing on the Indian market.
-Your goal is to identify a minimum of 20 to 30 newly funded startups or stable companies in India that are highly likely to benefit from an 'Influencer Marketing Campaign'.
-Consumer brands, D2C, e-commerce, EdTech, and Fintech are good targets.
+    current_date = datetime.now()
+    month_name = current_date.strftime("%B")
+    year = current_date.year
+
+    system_prompt = f"""You are a top-tier B2B market researcher focusing on the Indian market.
+Your goal is to identify a minimum of 20 to 30 newly funded startups, stable companies, D2C brands, or B2B SaaS companies in India highly likely to benefit from an 'Influencer Marketing Campaign'.
+Priority targets include newly founded startups, brands trending in {month_name} {year}, e-commerce, EdTech, Fintech, and emerging B2B startups. Focus on companies highly active or recently in the news.
 
 You MUST return your findings as a strict JSON array of objects.
 Each object must have exactly two keys: "name" (the company name) and "domain" (the company's website domain, e.g., "example.com", no https://).
 Do NOT include markdown formatting like ```json.
 """
-    print("Running parallel web searches (Tavily + Apify)...")
-    def run_tavily():
-        return tavily_tool.invoke("20 Newly funded Indian startups D2C e-commerce edtech latest news")
+    print(f"Running parallel web searches (Tavily + Apify) for {month_name} {year} targeting B2B/D2C/Startups...")
 
-    def run_apify():
+    tavily_queries = [
+        f"site:inc42.com OR site:yourstory.com new D2C brands startups India {month_name} {year}",
+        f"top new B2B SaaS startups India funding news {month_name} {year}",
+        f"newly funded ecommerce edtech startups India {month_name} {year}"
+    ]
+    
+    apify_queries = [
+        f"latest Indian startups {month_name} {year} funding list",
+        f"top D2C B2B emerging companies India {year}"
+    ]
+
+    def run_tavily(query):
+        try:
+            return tavily_tool.invoke(query)
+        except Exception as e:
+            print(f"Tavily error: {e}")
+            return ""
+
+    def run_apify(query):
         if apify_tool:
-            return apify_tool.invoke("latest top 30 Indian startups 2025-2026 funding list")
+            try:
+                return apify_tool.invoke(query)
+            except Exception as e:
+                print(f"Apify error: {e}")
+                pass
         return ""
         
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        future_tavily = executor.submit(run_tavily)
-        future_apify = executor.submit(run_apify)
-        search_results = f"TAVILY RESULTS:\\n{future_tavily.result()}\\n\\nAPIFY RESULTS:\\n{future_apify.result()}"
+        tavily_futures = [executor.submit(run_tavily, q) for q in tavily_queries]
+        apify_futures = [executor.submit(run_apify, q) for q in apify_queries]
         
-    user_msg = f"Use this extensive search context to find 20-30 target companies:\\n{search_results}\\n\\nProvide the JSON list of minimum 20 companies and domains."
+        search_results_blocks = []
+        for i, f in enumerate(tavily_futures):
+            res = f.result()
+            if res: search_results_blocks.append(f"TAVILY QUERY '{tavily_queries[i]}' RESULTS:\\n{res}")
+        for i, f in enumerate(apify_futures):
+            res = f.result()
+            if res: search_results_blocks.append(f"APIFY QUERY '{apify_queries[i]}' RESULTS:\\n{res}")
+            
+        search_results = "\\n\\n".join(search_results_blocks)
+        
+    user_msg = f"Use this extensive search context containing fresh B2B and D2C startups to find 20-30 target companies:\\n{search_results}\\n\\nProvide the JSON list of minimum 20 companies and domains."
     
     response = llm.invoke([SystemMessage(content=system_prompt), HumanMessage(content=user_msg)])
     
