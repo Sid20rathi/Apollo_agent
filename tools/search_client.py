@@ -1,4 +1,4 @@
-from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_tavily import TavilySearch
 from langchain_core.tools import tool
 from apify_client import ApifyClient
 from config import config
@@ -30,7 +30,7 @@ def apify_search(query: str) -> str:
 class SearchClient:
     def __init__(self):
         # We will expose a LangChain Tool for the Gemini agent to use seamlessly
-        self.tavily_tool = TavilySearchResults(max_results=15)
+        self.tavily_tool = TavilySearch(max_results=20)
         
     def get_tools(self):
         tools = [self.tavily_tool]

@@ -37,7 +37,12 @@ class ApolloClient:
                 # We need to unlock the email if it's not present
                 email = person.get('email')
                 if not email and person.get('id'):
-                     email = self._enrich_contact(person['id'])
+                     email = self._enrich_contact(
+                         person['id'],
+                         first_name=person.get('first_name'),
+                         last_name=person.get('last_name'),
+                         domain=domain
+                     )
                 
                 if email:
                     # Handle cases where last_name might be None
@@ -58,14 +63,23 @@ class ApolloClient:
             print(f"Error searching contacts on Apollo for {domain}: {str(e)}")
             return []
 
-    def _enrich_contact(self, person_id):
+    def _enrich_contact(self, person_id, first_name=None, last_name=None, domain=None):
         """
-        Unlock the contact's email address by their Apollo ID
+        Unlock the contact's email address by their Apollo ID or details
         """
         url = f"{self.base_url}/people/match"
         payload = {
             "id": person_id
         }
+        
+        # Provide fallback match fields if ID fails or is insufficient
+        if first_name:
+            payload["first_name"] = first_name
+        if last_name:
+            payload["last_name"] = last_name
+        if domain:
+            payload["domain"] = domain
+            
         try:
             response = requests.post(url, headers=self.headers, json=payload)
             response.raise_for_status()

@@ -35,29 +35,30 @@ async def trigger_outreach():
         # Re-build the graph to ensure fresh state
         workflow = build_graph()
         
-        # Initial state
+        # Initial state (State managed mostly in Google Sheets now)
         initial_state = {
-            "companies_to_target": [],
-            "found_contacts": [],
-            "sent_emails": [],
-            "errors": []
+            "errors": [],
+            "emails_sent_count": 0,
+            "sent_emails": []
         }
         
         # Run the graph (this is synchronous in graph.py, but we run it inside the async handler)
         # Note: Render may timeout if this takes > 30s.
         final_state = workflow.invoke(initial_state)
         
-        sent_emails = final_state.get("sent_emails", [])
         errors = final_state.get("errors", [])
+        sent_emails = final_state.get("sent_emails", [])
+        emails_sent_count = final_state.get("emails_sent_count", 0)
         
         if errors:
             logger.error(f"Graph execution errors: {errors}")
             
         return {
             "status": "success",
-            "emails_sent_count": len(sent_emails),
-            "sent_emails": sent_emails,
-            "errors": errors
+            "message": "Pipeline execution complete. Check Google Sheets for logs and updates.",
+            "errors": errors,
+            "emails_sent_count": emails_sent_count,
+            "sent_emails": sent_emails
         }
     except Exception as e:
         logger.exception("Failed to execute outreach graph")
