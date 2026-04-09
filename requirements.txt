@@ -140,8 +140,6 @@ typer-slim==0.24.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 tyro==1.0.9
-unsloth==2026.3.4
-unsloth_zoo==2026.3.2
 urllib3==2.6.3
 uuid_utils==0.14.1
 wcwidth==0.6.0
