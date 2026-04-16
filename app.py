@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from graph import build_graph
 from config import config
 import logging
+from pydantic import BaseModel
+from typing import Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -26,8 +28,11 @@ async def health_check():
     """Endpoint for Render to check if the app is awake."""
     return {"status": "ok", "service": "apollo-agent", "message": "Backend is live"}
 
+class TriggerRequest(BaseModel):
+    query: Optional[str] = None
+
 @app.post("/trigger")
-async def trigger_outreach():
+async def trigger_outreach(req: TriggerRequest = None):
     """Manual trigger for the Apollo Outreach Agent."""
     logger.info("Outreach trigger received via API.")
     
@@ -39,7 +44,8 @@ async def trigger_outreach():
         initial_state = {
             "errors": [],
             "emails_sent_count": 0,
-            "sent_emails": []
+            "sent_emails": [],
+            "query": req.query if req and req.query else ""
         }
         
         # Run the graph (this is synchronous in graph.py, but we run it inside the async handler)

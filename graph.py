@@ -23,6 +23,7 @@ class OutreachState(TypedDict):
     errors: List[str]
     emails_sent_count: int
     sent_emails: List[Dict[str, str]]
+    query: NotRequired[str]
 
 # --- HELPER DYNAMIC QUERIES ---
 def get_dynamic_queries(month_name, year):
@@ -64,10 +65,29 @@ def research_market(state: OutreachState) -> OutreachState:
     month_name = current_date.strftime("%B")
     year = current_date.year
 
-    tavily_queries, apify_queries, city, niche = get_dynamic_queries(month_name, year)
-    print(f"Targeting: {niche} startups in {city} / India...")
+    query = state.get("query", "").strip()
+    
+    if query:
+        print(f"Targeting custom query: {query}")
+        tavily_queries = [query]
+        apify_queries = [query]
+        niche = "target"
+        system_prompt = f"""You are a top-tier B2B market researcher inside an automated pipeline.
+Your goal is to identify 20 to 30 unique companies matching this search intent: '{query}'.
 
-    system_prompt = f"""You are a top-tier B2B market researcher inside an automated pipeline.
+You MUST return your findings as a strict JSON array of objects.
+Each object must have exactly three keys: 
+1. "name" (the company name) 
+2. "domain" (the company's website domain, e.g., "example.com", no https://)
+3. "summary" (A 1-sentence description of what they do)
+
+Do NOT include markdown formatting like ```json.
+"""
+    else:
+        tavily_queries, apify_queries, city, niche = get_dynamic_queries(month_name, year)
+        print(f"Targeting: {niche} startups in {city} / India...")
+
+        system_prompt = f"""You are a top-tier B2B market researcher inside an automated pipeline.
 Your goal is to identify 20 to 30 unique newly funded or emerging {niche} startups in India (specifically around {city} or pan-India).
 
 You MUST return your findings as a strict JSON array of objects.
@@ -129,7 +149,8 @@ Do NOT include markdown formatting like ```json.
                 domain = domain[4:]
             
             if domain and domain not in known_domains:
-                sheets_client.append_new_discovery(name, domain, source=f"Tavily/Apify {month_name} {year}")
+                source_label = f"Search: {query[:15]}..." if query else f"Tavily/Apify {month_name} {year}"
+                sheets_client.append_new_discovery(name, domain, source=source_label)
                 known_domains.add(domain) # Prevent duplicates in same run
                 new_count += 1
             else:

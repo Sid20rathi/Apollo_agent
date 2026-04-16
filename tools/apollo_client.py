@@ -85,6 +85,10 @@ class ApolloClient:
             response.raise_for_status()
             data = response.json()
             return data.get('person', {}).get('email')
+        except requests.exceptions.RequestException as e:
+            error_msg = response.text if 'response' in locals() and response else str(e)
+            print(f"Error enriching contact {person_id}: {error_msg}")
+            return None
         except Exception as e:
             print(f"Error enriching contact {person_id}: {str(e)}")
             return None

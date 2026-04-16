@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [isTriggering, setIsTriggering] = useState(false);
   const [lastResult, setLastResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   // Poll health endpoint
   const checkHealth = useCallback(async () => {
@@ -45,6 +46,8 @@ export default function Dashboard() {
     try {
       const response = await fetch(`${BACKEND_URL}/trigger`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: query.trim() || undefined }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -119,46 +122,64 @@ export default function Dashboard() {
                   Control Hub
                 </h2>
                 
-                <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
-                  <div className="flex-1 space-y-4">
-                    <p className="text-zinc-400 leading-relaxed max-w-xl text-lg">
-                      Start the daily outreach cycle. The agent will research Indian startups, identify decision-makers on Apollo, and deliver personalized pitches via Resend using your verified template.
-                    </p>
-                    <div className="flex flex-wrap gap-3">
-                      <span className="px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400 border border-zinc-700">Tavily Web Search</span>
-                      <span className="px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400 border border-zinc-700">Apollo B2B Data</span>
-                      <span className="px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400 border border-zinc-700">Resend Delivery</span>
+                <div className="flex flex-col gap-6 md:gap-8">
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-8 md:gap-16">
+                    <div className="flex-1 space-y-4">
+                      <p className="text-zinc-400 leading-relaxed max-w-xl text-lg">
+                        Start the daily outreach cycle. The agent will research Indian startups, identify decision-makers on Apollo, and deliver personalized pitches via Resend using your verified template.
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        <span className="px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400 border border-zinc-700">Tavily Web Search</span>
+                        <span className="px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400 border border-zinc-700">Apollo B2B Data</span>
+                        <span className="px-3 py-1 bg-zinc-800 rounded-full text-xs text-zinc-400 border border-zinc-700">Resend Delivery</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="w-full md:w-auto">
-                    <button
-                      onClick={handleTrigger}
-                      disabled={!isBackendLive || isTriggering}
-                      className={`
-                        relative w-full md:w-64 py-5 px-8 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3
-                        ${isBackendLive && !isTriggering 
-                          ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-[0_8px_30px_rgb(249,115,22,0.3)] hover:scale-[1.02] active:scale-[0.98]' 
-                          : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700'}
-                      `}
-                    >
-                      {isTriggering ? (
-                        <>
-                          <Loader2 className="w-6 h-6 animate-spin" />
-                          <span>Executing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Send className={`w-5 h-5 ${isBackendLive ? 'text-white' : 'text-zinc-600'}`} />
-                          <span>Run Outreach</span>
-                        </>
+                  {/* Query Input Section */}
+                  <div className="flex flex-col md:flex-row items-end gap-6">
+                    <div className="flex-1 w-full space-y-3">
+                      <label className="text-sm font-semibold text-zinc-300 uppercase tracking-widest pl-1">Target Market Search (Custom Query)</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g., upcoming B2B SaaS startups in Bangalore, new AI agencies..."
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        className="w-full bg-black/50 border border-zinc-700 focus:border-orange-500/80 rounded-2xl px-6 py-4 text-white outline-none transition-all focus:ring-4 focus:ring-orange-500/10 shadow-inner text-lg placeholder:text-zinc-600"
+                        disabled={isTriggering}
+                      />
+                      <p className="text-xs text-zinc-500 pl-1 font-medium italic">Leave empty to use dynamic randomized search queries across major cities and niches.</p>
+                    </div>
+
+                    <div className="w-full md:w-auto flex flex-col pt-4">
+                      <button
+                        onClick={handleTrigger}
+                        disabled={!isBackendLive || isTriggering}
+                        className={`
+                          relative w-full md:w-64 py-5 px-8 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3
+                          ${isBackendLive && !isTriggering 
+                            ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-[0_8px_30px_rgb(249,115,22,0.3)] hover:scale-[1.02] active:scale-[0.98]' 
+                            : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700'}
+                        `}
+                      >
+                        {isTriggering ? (
+                          <>
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                            <span>Executing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className={`w-5 h-5 ${isBackendLive ? 'text-white' : 'text-zinc-600'}`} />
+                            <span>Run Outreach</span>
+                          </>
+                        )}
+                      </button>
+                      {!isBackendLive && (
+                        <p className="text-center text-xs text-orange-400/60 mt-3 font-medium animate-pulse uppercase tracking-wider">
+                          Waiting for Render to wake up...
+                        </p>
                       )}
-                    </button>
-                    {!isBackendLive && (
-                      <p className="text-center text-xs text-orange-400/60 mt-3 font-medium animate-pulse uppercase tracking-wider">
-                        Waiting for Render to wake up...
-                      </p>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
