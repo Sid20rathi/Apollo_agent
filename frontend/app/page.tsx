@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Send, CheckCircle, AlertCircle, Loader2, Zap, BarChart3, Mail, RefreshCcw } from "lucide-react";
 
 // Fallback to localhost if ENV is not set
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export default function Dashboard() {
   const [isBackendLive, setIsBackendLive] = useState(false);
